@@ -5,6 +5,12 @@ import requests
 from requests.exceptions import HTTPError
 import sys
 
+class SmartFormatter(argparse.HelpFormatter):
+    def _split_lines(self, text, width):
+        if text.startswith("R|"):
+            return text[2:].splitlines()
+        return argparse.HelpFormatter._split_lines(self, text, width)
+
 def get_data(url):
     try:
         response = requests.get(url)
@@ -79,12 +85,25 @@ def get_string(pokemon, format="sv"):
 def main():
     parser = argparse.ArgumentParser(
         prog="pkmn-dex-string",
-        description="Generates the Pokédex string for a given Pokémon."
+        description="Generates the Pokédex string for a given Pokémon.",
+        formatter_class=SmartFormatter
     )
     
-    parser.add_argument("-b", "--batch", action="store_true")
-    parser.add_argument("-d", "--delimiter", type=str)
-    parser.add_argument("-f", "--format", type=str)
+    parser.add_argument("-b", "--batch", action="store_true", help="set this flag to process multiple pokémon")
+    parser.add_argument("-d", "--delimiter", type=str, help="specify a delimiter for batch processing (default newline)")
+    parser.add_argument(
+        "-f", "--format",
+        type=str,
+        help="R|specify a format specifier or format string (default sv)"
+            "\nformat specifiers:"
+            "\n\t[sv, swsh, sm, xy, bw, hgss, dppt, e, neo, gym, base, omnium]"
+            "\nformat string options:"
+            "\n\t%%Xn: pokédex number, where X is the number of leading 0s (default 0)"
+            "\n\t%%s: species, (e.g. Mouse Pokémon)"
+            "\n\t%%f: feet portion of height"
+            "\n\t%%i: inches portion of height"
+            "\n\t%%Xw: weight in lbs, rounded to X decimal places (default 1)"
+    )
     parser.add_argument("pokemon", nargs="+")
 
     args = parser.parse_args()
